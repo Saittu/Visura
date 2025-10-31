@@ -9,11 +9,13 @@ export default defineConfig([
     ignores: [
       'node_modules/**',
       'dist/**',
+      'api/dist/**',
       '.next/**',
       'out/**',
       'build/**',
       'coverage/**',
-      '*.config.*'
+      '*.config.*',
+      '**/*.d.ts'
     ]
   },
 
@@ -23,7 +25,7 @@ export default defineConfig([
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: './tsconfig.json',
+        project: ['./api/tsconfig.json'],
         ecmaVersion: 'latest',
         sourceType: 'module'
       }
@@ -41,6 +43,14 @@ export default defineConfig([
   // Next.js
   {
     files: ['frontend/**/*.{js,jsx,ts,tsx}'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        ecmaFeatures: { jsx: true }
+      }
+    },
     ...next['core-web-vitals'],
     rules: {
       'react/react-in-jsx-scope': 'off',
