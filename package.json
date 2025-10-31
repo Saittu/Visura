@@ -1,0 +1,36 @@
+{
+  "name": "visura",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "frontend",
+    "api",
+    "shared"
+  ],
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "eslint": "^9.38.0",
+    "eslint-config-next": "^16.0.1",
+    "next": "^16.0.1",
+    "prettier": "^3.6.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.2"
+  },
+  "scripts": {
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:api": "pnpm --filter api dev",
+    "dev": "pnpm run dev:api & pnpm run dev:frontend",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "prepare": "pwsh ./scripts/check-husky.ps1"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "lint-staged": "^16.2.6",
+    "prettier-plugin-tailwindcss": "^0.7.1",
+    "husky": "^8.0.0"
+  }
+}
