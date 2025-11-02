@@ -8,5 +8,5 @@ export function redirectRoot(req: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  return null // nada a fazer
+  return null
 }

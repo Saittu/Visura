@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { redirectRoot } from './middlewares/redirect-root'
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const redirect = redirectRoot(request)
   if (redirect) return redirect
 
