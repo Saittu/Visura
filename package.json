@@ -29,7 +29,7 @@
     "dev:api": "pnpm --filter visura-api dev",
     "dev": "pnpm run dev:api & pnpm run dev:frontend",
     "lint": "eslint \"api/src/**/*.{ts,tsx,js,jsx}\" \"frontend/app/**/*.{ts,tsx,js,jsx}\" \"shared/src/**/*.{ts,tsx,js,jsx}\" --ext .ts,.tsx,.js,.jsx --no-error-on-unmatched-pattern",
-    "prepare": "husky install"
+    "prepare": "pwsh ./scripts/check-husky.ps1"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
