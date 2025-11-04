@@ -22,13 +22,13 @@ export default defineConfig([
     ]
   },
 
-  // Base TypeScript
+  // Base TypeScript (API)
   {
     files: ['api/**/*.{ts,tsx}', 'scripts/**/*.{ts,tsx}'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: ['./api/tsconfig.json'],
+        project: ['./api/tsconfig.eslint.json'],
         ecmaVersion: 'latest',
         sourceType: 'module'
       }
