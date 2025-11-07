@@ -1,22 +1,101 @@
 'use client'
 
-import { Input } from '../../components/ui/input/page'
-import { Button } from '@/app/components/ui/button/page'
-import { Checkbox } from '@/app/components/ui/checkbox/page'
+import { Input } from '../../_components/ui/input'
+import { Button } from '@/app/_components/ui/button'
+import { Checkbox } from '@/app/_components/ui/checkbox'
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger
-} from '@/app/components/ui/hoverCard/page'
-import { Label } from '@/app/components/ui/label/page'
+} from '@/app/_components/ui/hoverCard'
+import { Label } from '@/app/_components/ui/label'
 import Link from 'next/link'
-import { use, useState } from 'react'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { register as apiRegister, type RegisterPayload } from '@/lib/api'
+import { VerifyEmailModal } from '@/app/_components/modals/VerifyEmailModal'
+import { VerifyPhoneModal } from '@/app/_components/modals/VerifyPhoneModal'
 
 export default function RegisterPage() {
+  const router = useRouter()
   const [LoginPassword, setLoginPassword] = useState(false)
+
+  const [username, setUsername] = useState('')
+  const [telephone, setTelephone] = useState('')
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [showPhoneModal, setShowPhoneModal] = useState(false)
+  const [registeredUserId, setRegisteredUserId] = useState<string | null>(null)
 
   function handleCheckboxChange() {
     setLoginPassword(!LoginPassword)
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setSuccess(null)
+
+    if (!LoginPassword && !password) {
+      setError('Informe uma senha.')
+      return
+    }
+
+    const payload: RegisterPayload = {
+      email,
+      username,
+      password: LoginPassword ? 'temp-pass-ignored' : password,
+      name,
+      telephone
+    }
+
+    try {
+      setLoading(true)
+      const res = await apiRegister(payload)
+
+      // Armazenar tokens no client (dev). Em produção cookies httpOnly via rota /api.
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('accessToken', res.accessToken)
+        localStorage.setItem('refreshToken', res.refreshToken)
+        if (res.userId) {
+          localStorage.setItem('userId', res.userId)
+          setRegisteredUserId(res.userId)
+        }
+      }
+
+      setSuccess('Registrado! Agora vamos verificar seu e-mail e telefone.')
+      // Abrir modal de verificação de e-mail após 500ms
+      setTimeout(() => {
+        setShowEmailModal(true)
+      }, 500)
+    } catch (err: any) {
+      setError(err?.message || 'Falha ao registrar')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function handleEmailVerified() {
+    setShowEmailModal(false)
+    setSuccess('E-mail verificado! Agora vamos verificar seu telefone.')
+    // Abrir modal de telefone após fechar o de e-mail
+    setTimeout(() => {
+      setShowPhoneModal(true)
+    }, 300)
+  }
+
+  function handlePhoneVerified() {
+    setShowPhoneModal(false)
+    setSuccess('Telefone verificado! Redirecionando para login...')
+    setTimeout(() => {
+      router.push('/auth/login')
+    }, 1000)
   }
 
   return (
@@ -30,35 +109,45 @@ export default function RegisterPage() {
             </h1>
           </div>
 
-          <div className='p-10'>
+          <form className='p-10' onSubmit={onSubmit}>
             <h2 className='mb-3 ml-1 text-[20px] font-medium'>Cadastrar</h2>
             <div className='flex gap-2'>
               <Input
                 type='text'
                 placeholder='Nome de usuário'
                 className='dark:bg-background'
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
               <Input
                 type='text'
-                placeholder='Telefone'
+                placeholder='Telefone (+5511999999999)'
                 className='dark:bg-background'
+                value={telephone}
+                onChange={(e) => setTelephone(e.target.value)}
               />
             </div>
             <Input
               type='text'
               placeholder='Nome completo'
               className='dark:bg-background mt-4'
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
             <Input
               type='email'
               placeholder='E-mail'
               className='dark:bg-background mt-4'
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
             {!LoginPassword && (
               <Input
                 type='password'
                 placeholder='Senha'
                 className='dark:bg-background mt-4'
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
             )}
 
@@ -101,11 +190,16 @@ export default function RegisterPage() {
                 </Link>
               </p>
             </div>
-          </div>
-
-          <div className='mb-6 flex justify-center px-10'>
-            <Button className='w-full'>Continuar</Button>
-          </div>
+            {error && <p className='mt-4 text-sm text-red-500'>{error}</p>}
+            {success && (
+              <p className='mt-4 text-sm text-green-500'>{success}</p>
+            )}
+            <div className='mt-6 mb-6 flex justify-center'>
+              <Button className='w-full' type='submit' disabled={loading}>
+                {loading ? 'Enviando...' : 'Continuar'}
+              </Button>
+            </div>
+          </form>
 
           <div className='mb-10 flex justify-center'>
             <div className='bg-border h-0.5 w-5/6'></div>
@@ -126,6 +220,20 @@ export default function RegisterPage() {
           </div>
         </div>
       </main>
+
+      {/* Modais de verificação sequenciais */}
+      <VerifyEmailModal
+        open={showEmailModal}
+        onOpenChange={setShowEmailModal}
+        email={email}
+        onSuccess={handleEmailVerified}
+      />
+      <VerifyPhoneModal
+        open={showPhoneModal}
+        onOpenChange={setShowPhoneModal}
+        userId={registeredUserId || ''}
+        onSuccess={handlePhoneVerified}
+      />
     </div>
   )
 }

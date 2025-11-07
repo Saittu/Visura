@@ -18,3 +18,4 @@ function Label({
   )
 }
 export { Label }
+export default Label

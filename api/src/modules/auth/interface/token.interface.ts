@@ -6,4 +6,5 @@ export interface TokenPayload {
 export interface TokenResponse {
   accessToken: string
   refreshToken: string
+  userId?: string // Opcional para retornar no registro
 }
