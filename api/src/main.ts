@@ -5,8 +5,26 @@ import { ValidationPipe } from '@nestjs/common'
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
 
+  const corsEnv = process.env.CORS_ALLOWED_ORIGINS
+  const allowedOrigins =
+    corsEnv && corsEnv.length > 0
+      ? corsEnv
+          .split(',')
+          .map((o) => o.trim())
+          .filter(Boolean)
+      : ['http://localhost:3000']
+
   app.enableCors({
-    origin: '*'
+    origin: (origin, callback) => {
+      // Requests internas (sem origin) como health checks ou server-to-server devem ser permitidas
+      if (!origin) return callback(null, true)
+      if (allowedOrigins.includes(origin)) return callback(null, true)
+      return callback(new Error(`Not allowed by CORS: ${origin}`))
+    },
+    credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 204
   })
 
   app.useGlobalPipes(
