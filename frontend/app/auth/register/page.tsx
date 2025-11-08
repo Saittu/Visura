@@ -59,15 +59,9 @@ export default function RegisterPage() {
       setLoading(true)
       const res = await apiRegister(payload)
 
-      // Armazenar tokens no client (dev). Em produção cookies httpOnly via rota /api.
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('accessToken', res.accessToken)
-        localStorage.setItem('refreshToken', res.refreshToken)
-        if (res.userId) {
-          localStorage.setItem('userId', res.userId)
-          setRegisteredUserId(res.userId)
-        }
-      }
+      // Tokens agora são armazenados automaticamente em httpOnly cookies pela API route
+      // Armazenar apenas userId para uso nos modais de verificação
+      setRegisteredUserId(res.user.id)
 
       setSuccess('Registrado! Agora vamos verificar seu e-mail e telefone.')
       // Abrir modal de verificação de e-mail após 500ms

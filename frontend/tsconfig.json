@@ -21,7 +21,9 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@visura/shared": ["../shared/src/index.ts"],
+      "@visura/shared/*": ["../shared/src/*"]
     }
   },
   "include": [

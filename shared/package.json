@@ -1,12 +1,19 @@
 {
-  "name": "shared",
+  "name": "@visura/shared",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Shared types, contracts and constants for Visura monorepo",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types/auth.types.ts",
+    "./contracts": "./src/contracts/IAuthService.ts",
+    "./constants": "./src/constants/auth.constants.ts"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["visura", "shared", "types", "contracts"],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.20.0",
