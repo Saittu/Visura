@@ -1,14 +1,14 @@
 'use client'
 
-import { Input } from '../../components/ui/input/page'
-import { Button } from '@/app/components/ui/button/page'
-import { Checkbox } from '@/app/components/ui/checkbox/page'
+import { Input } from '../../_components/ui/input'
+import { Button } from '@/app/_components/ui/button'
+import { Checkbox } from '@/app/_components/ui/checkbox'
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger
-} from '@/app/components/ui/hoverCard/page'
-import { Label } from '@/app/components/ui/label/page'
+} from '@/app/_components/ui/hoverCard'
+import { Label } from '@/app/_components/ui/label'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 

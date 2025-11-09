@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
@@ -12,13 +12,15 @@ model Users {
   id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email              String               @unique
   username           String               @unique
-  name               String?
-  telephone          String?
+  name               String
+  telephone          String
   bio                String?
   avatar_url         String?
   email_verified     Boolean?             @default(false)
   last_login_at      DateTime?            @db.Timestamptz(6)
   created_at         DateTime?            @default(now()) @db.Timestamptz(6)
+  password_hash      String?
+  phone_verified     Boolean?             @default(false)
   conversation_users conversation_users[]
   email_tokens       email_tokens[]
   likes              likes[]
