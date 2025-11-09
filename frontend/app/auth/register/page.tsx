@@ -1,6 +1,7 @@
 'use client'
 
 import { Input } from '../../_components/ui/input'
+import dynamic from 'next/dynamic'
 import { Button } from '@/app/_components/ui/button'
 import { Checkbox } from '@/app/_components/ui/checkbox'
 import {
@@ -13,15 +14,27 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { register as apiRegister, type RegisterPayload } from '@/lib/api'
-import { VerifyEmailModal } from '@/app/_components/modals/VerifyEmailModal'
-import { VerifyPhoneModal } from '@/app/_components/modals/VerifyPhoneModal'
+const VerifyEmailModal = dynamic(
+  () =>
+    import('@/app/_components/modals/VerifyEmailModal').then(
+      (m) => m.VerifyEmailModal
+    ),
+  { ssr: false }
+)
+const VerifyPhoneModal = dynamic(
+  () =>
+    import('@/app/_components/modals/VerifyPhoneModal').then(
+      (m) => m.VerifyPhoneModal
+    ),
+  { ssr: false }
+)
 
 export default function RegisterPage() {
   const router = useRouter()
   const [LoginPassword, setLoginPassword] = useState(false)
 
   const [username, setUsername] = useState('')
-  const [telephone, setTelephone] = useState('')
+  const [telephone, setTelephone] = useState<string>('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -32,6 +45,11 @@ export default function RegisterPage() {
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [showPhoneModal, setShowPhoneModal] = useState(false)
   const [registeredUserId, setRegisteredUserId] = useState<string | null>(null)
+
+  function warmupDynamic() {
+    void import('@/app/_components/modals/VerifyEmailModal')
+    void import('@/app/_components/modals/VerifyPhoneModal')
+  }
 
   function handleCheckboxChange() {
     setLoginPassword(!LoginPassword)
@@ -72,6 +90,7 @@ export default function RegisterPage() {
       setError(err?.message || 'Falha ao registrar')
     } finally {
       setLoading(false)
+      setPassword('')
     }
   }
 
@@ -86,9 +105,9 @@ export default function RegisterPage() {
 
   function handlePhoneVerified() {
     setShowPhoneModal(false)
-    setSuccess('Telefone verificado! Redirecionando para login...')
+    setSuccess('Telefone verificado! Redirecionando para o feed...')
     setTimeout(() => {
-      router.push('/auth/login')
+      router.push('/')
     }, 1000)
   }
 
@@ -112,6 +131,8 @@ export default function RegisterPage() {
                 className='dark:bg-background'
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                aria-label='Nome de usuário'
+                onFocus={warmupDynamic}
               />
               <Input
                 type='text'
@@ -123,7 +144,7 @@ export default function RegisterPage() {
             </div>
             <Input
               type='text'
-              placeholder='Nome completo'
+              placeholder='Nome de visualização'
               className='dark:bg-background mt-4'
               value={name}
               onChange={(e) => setName(e.target.value)}

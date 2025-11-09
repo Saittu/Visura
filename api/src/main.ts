@@ -16,7 +16,6 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
-      // Requests internas (sem origin) como health checks ou server-to-server devem ser permitidas
       if (!origin) return callback(null, true)
       if (allowedOrigins.includes(origin)) return callback(null, true)
       return callback(new Error(`Not allowed by CORS: ${origin}`))

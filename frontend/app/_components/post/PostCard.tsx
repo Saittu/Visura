@@ -6,6 +6,11 @@ import type { Post } from '@visura/shared'
 import { Button } from '../ui/button'
 import { useState } from 'react'
 
+import { Heart } from 'lucide-react'
+import { Repeat2 } from 'lucide-react'
+import { Bookmark } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
+
 interface PostCardProps {
   post: Post
   className?: string
@@ -84,20 +89,34 @@ export function PostCard({ post, className, onLike, onSave }: PostCardProps) {
         </div>
       )}
 
-      <footer className='mt-2 flex items-center gap-2'>
+      <footer className='mt-2 flex items-center gap-10'>
         <Button
           variant={liked ? 'default' : 'outline'}
           size='sm'
           onClick={handleLike}
         >
-          ❤️ {likes}
+          <Heart className='h-4 w-4' /> {likes}
+        </Button>
+        <Button
+          variant={liked ? 'default' : 'outline'}
+          size='sm'
+          onClick={handleLike}
+        >
+          <MessageCircle className='h-4 w-4' /> {likes}
+        </Button>
+        <Button
+          variant={liked ? 'default' : 'outline'}
+          size='sm'
+          onClick={handleLike}
+        >
+          <Repeat2 className='h-4 w-4' /> {likes}
         </Button>
         <Button
           variant={saved ? 'default' : 'outline'}
           size='sm'
           onClick={handleSave}
         >
-          💾 Salvar
+          <Bookmark className='h-4 w-4' /> {saved ? 1 : 0}
         </Button>
       </footer>
     </article>
