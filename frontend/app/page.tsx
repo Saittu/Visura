@@ -1,3 +1,4 @@
+'use client'
 import { PostCard } from './_components/post/PostCard'
 import type { Post } from '@visura/shared'
 import { RightPanel } from './_components/layout/RightPanel'

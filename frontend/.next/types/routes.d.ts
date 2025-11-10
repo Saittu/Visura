@@ -11,6 +11,7 @@ type AppRouteHandlerRoutes =
   | '/api/auth/send-phone-code'
   | '/api/auth/verify-email'
   | '/api/auth/verify-phone'
+  | '/api/posts'
 type PageRoutes = never
 type LayoutRoutes = '/'
 type RedirectRoutes = never
@@ -33,6 +34,7 @@ interface ParamMap {
   '/api/auth/send-phone-code': {}
   '/api/auth/verify-email': {}
   '/api/auth/verify-phone': {}
+  '/api/posts': {}
   '/auth/login': {}
   '/auth/register': {}
 }

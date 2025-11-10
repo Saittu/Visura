@@ -11,7 +11,7 @@ export interface PostAuthor {
 export interface Post {
   id: string
   authorId: string
-  content?: string | null
+  content: string | null
   imageUrl?: string | null
   createdAt: Date
   updatedAt: Date
@@ -23,12 +23,12 @@ export interface Post {
 }
 
 export interface CreatePostDto {
-  content?: string
+  content: string
   imageUrl?: string
 }
 
 export interface UpdatePostDto {
-  content?: string
+  content: string
   imageUrl?: string | null
 }
 
