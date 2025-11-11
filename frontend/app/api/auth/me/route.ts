@@ -20,8 +20,9 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Backend usa POST para /auth/me (protegido com guard)
     const response = await fetch(`${BACKEND_URL}/auth/me`, {
-      method: 'GET',
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json'

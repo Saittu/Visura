@@ -9,15 +9,57 @@ import {
   HoverCardTrigger
 } from '@/app/_components/ui/hoverCard'
 import { Label } from '@/app/_components/ui/label'
+import { login } from '@/lib/api'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { login as apiLogin, type LoginPayload } from '@/lib/api'
 
 export default function LoginPage() {
   const router = useRouter()
   const [LoginPassword, setLoginPassword] = useState(false)
 
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [loginUserId, setLoginUserId] = useState<string | null>(null)
+
   function handleCheckboxChange() {
     setLoginPassword(!LoginPassword)
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setSuccess(null)
+
+    if (!LoginPassword && !password) {
+      setError('Por favor, insira sua senha.')
+      return
+    }
+
+    const payload: LoginPayload = {
+      email,
+      password
+    }
+
+    try {
+      setLoading(true)
+      const response = await apiLogin(payload)
+
+      setLoginUserId(response.user.id)
+
+      setSuccess('Login realizado com sucesso!')
+    } catch (err: any) {
+      setError(err.message || 'Erro ao realizar login.')
+    } finally {
+      setLoading(false)
+      setPassword('')
+      setTimeout(() => {
+        router.push('/')
+      }, 500)
+    }
   }
 
   return (
@@ -31,18 +73,22 @@ export default function LoginPage() {
             </h1>
           </div>
 
-          <div className='p-10'>
+          <form className='p-10' onSubmit={onSubmit}>
             <h2 className='mb-3 ml-1 text-[20px] font-medium'>Entrar</h2>
             <Input
               type='email'
               placeholder='Email'
+              value={email}
               className='dark:bg-background'
+              onChange={(e) => setEmail(e.target.value)}
             />
             {!LoginPassword && (
               <Input
                 type='password'
                 placeholder='Senha'
+                value={password}
                 className='dark:bg-background mt-4'
+                onChange={(e) => setPassword(e.target.value)}
               />
             )}
 
@@ -71,18 +117,23 @@ export default function LoginPage() {
                 </HoverCardContent>
               </HoverCard>
             </div>
-          </div>
-
-          <div className='mb-6 flex justify-center gap-5 px-13'>
-            <Button
-              className='w-1/2'
-              variant='outline'
-              onClick={() => router.push('/auth/register')}
-            >
-              Cadastrar
-            </Button>
-            <Button className='w-1/2'>Continuar</Button>
-          </div>
+            {error && <p className='mt-4 text-sm text-red-500'>{error}</p>}
+            {success && (
+              <p className='mt-4 text-sm text-green-500'>{success}</p>
+            )}
+            <div className='mt-6 flex justify-center gap-5 px-13'>
+              <Button
+                className='w-1/2'
+                variant='outline'
+                onClick={() => router.push('/auth/register')}
+              >
+                Cadastrar
+              </Button>
+              <Button className='w-1/2' type='submit' disabled={loading}>
+                {loading ? 'Carregando...' : 'Continuar'}
+              </Button>
+            </div>
+          </form>
 
           <div className='mb-10 flex justify-center'>
             <div className='bg-border h-0.5 w-5/6'></div>

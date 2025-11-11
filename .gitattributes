@@ -1,0 +1,31 @@
+# Normalize de finais de linha e tipos de arquivo
+
+# Padrão: rastrear como texto e usar LF no repo/working copy
+* text=auto eol=lf
+
+# Scripts Windows mantêm CRLF (quando necessário)
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Lockfiles e configs como texto com LF
+*.lock text eol=lf
+pnpm-lock.yaml text eol=lf
+
+# Arquivos binários (sem conversão)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.tgz binary
+*.dll binary
+*.node binary
+*.wasm binary
+
+# Prisma engine binário específico
+api/generated/prisma/query_engine-windows.dll.node binary

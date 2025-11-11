@@ -2,7 +2,6 @@
   "name": "visura-api",
   "version": "0.0.1",
   "description": "",
-  "author": "",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
@@ -20,6 +19,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@visura/shared": "workspace:*",
     "@nestjs/common": "^11.1.8",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",

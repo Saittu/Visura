@@ -209,6 +209,16 @@ type RouteHandlerConfig<
   type __Unused = __Check
 }
 
+// Validate ../../app/api/posts/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<'/api/posts'>> =
+    Specific
+  const handler = {} as typeof import('../../app/api/posts/route.js')
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/layout.tsx
 {
   type __IsExpected<Specific extends LayoutConfig<'/'>> = Specific
