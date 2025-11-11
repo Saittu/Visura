@@ -282,6 +282,7 @@ export class AuthService {
         bio: true,
         avatar_url: true,
         email_verified: true,
+        phone_verified: true,
         created_at: true,
         last_login_at: true
       }
