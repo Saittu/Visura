@@ -2,6 +2,7 @@
   "name": "visura",
   "private": true,
   "version": "1.0.0",
+  "packageManager": "pnpm@10.22.0",
   "workspaces": [
     "frontend",
     "api",
@@ -29,7 +30,12 @@
     "dev:api": "pnpm --filter visura-api start:dev",
     "dev": "pnpm run dev:api & pnpm run dev:frontend",
     "lint": "eslint \"api/src/**/*.{ts,tsx,js,jsx}\" \"frontend/app/**/*.{ts,tsx,js,jsx}\" \"shared/src/**/*.{ts,tsx,js,jsx}\" --ext .ts,.tsx,.js,.jsx --no-error-on-unmatched-pattern",
-    "prepare": "pwsh ./scripts/check-husky.ps1"
+    "prepare": "node -e \"try{require('child_process').execSync('pwsh ./scripts/check-husky.ps1',{stdio:'inherit'})}catch(e){console.log('Skipping husky (not in dev env)')}\"",
+    "docker:dev": "docker compose -f infra/docker-compose.yml up --build",
+    "docker:dev:down": "docker compose -f infra/docker-compose.yml down",
+    "docker:dev:logs": "docker compose -f infra/docker-compose.yml logs -f",
+    "docker:build:api": "docker build -f infra/docker/api.DockerFile -t visura-api:latest .",
+    "docker:build:frontend": "docker build -f infra/docker/frontend.Dockerfile -t visura-frontend:latest ."
   },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",

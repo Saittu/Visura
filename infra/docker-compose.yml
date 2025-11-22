@@ -1,0 +1,113 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: visura-postgres
+    restart: unless-stopped
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_USER: ${DB_USER:-visura}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-visura_dev_password}
+      POSTGRES_DB: ${DB_NAME:-visura}
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-visura}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (opcional: para cache, rate limiting, sessions)
+  redis:
+    image: redis:7-alpine
+    container_name: visura-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Backend (NestJS)
+  api:
+    build:
+      context: ..
+      dockerfile: infra/docker/api.DockerFile
+      target: builder
+    container_name: visura-api
+    restart: unless-stopped
+    ports:
+      - '3333:3333'
+    environment:
+      NODE_ENV: development
+      PORT: 3333
+      DATABASE_URL: postgresql://${DB_USER:-visura}:${DB_PASSWORD:-visura_dev_password}@postgres:5432/${DB_NAME:-visura}?schema=public
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev_secret_change_in_production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev_refresh_secret}
+      # Twilio (SMS)
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER:-}
+      # SMTP (Email)
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@visura.com}
+    working_dir: /app/api
+    volumes:
+      # Hot reload (desenvolvimento)
+      - ../api/src:/app/api/src:delegated
+      - ../api/prisma:/app/api/prisma:delegated
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: sh -c "npx prisma migrate deploy && pnpm run start:dev"
+
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: ..
+      dockerfile: infra/docker/frontend.Dockerfile
+      target: builder
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3000/api
+        BACKEND_API_URL: http://api:3333
+    container_name: visura-frontend
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3000/api
+      BACKEND_API_URL: http://api:3333
+    working_dir: /app/frontend
+    volumes:
+      # Hot reload
+      - ../frontend/app:/app/frontend/app:delegated
+      - ../frontend/lib:/app/frontend/lib:delegated
+      - ../frontend/styles:/app/frontend/styles:delegated
+      - ../frontend/public:/app/frontend/public:delegated
+    depends_on:
+      - api
+    command: pnpm run dev
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    name: visura-network
