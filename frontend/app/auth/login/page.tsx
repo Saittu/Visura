@@ -49,16 +49,16 @@ export default function LoginPage() {
       const response = await apiLogin(payload)
 
       setLoginUserId(response.user.id)
-
       setSuccess('Login realizado com sucesso!')
+      // Redireciona somente em caso de sucesso
+      setTimeout(() => {
+        router.push('/')
+      }, 500)
     } catch (err: any) {
       setError(err.message || 'Erro ao realizar login.')
     } finally {
       setLoading(false)
       setPassword('')
-      setTimeout(() => {
-        router.push('/')
-      }, 500)
     }
   }
 

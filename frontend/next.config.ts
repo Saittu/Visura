@@ -1,7 +1,6 @@
-import type { NextConfig } from "next";
+const nextConfig = {
+  // Habilitar standalone output para Docker
+  output: 'standalone'
+} satisfies import('next').NextConfig
 
-const nextConfig: NextConfig = {
-  /* config options here */
-};
-
-export default nextConfig;
+export default nextConfig

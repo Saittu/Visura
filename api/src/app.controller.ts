@@ -14,6 +14,26 @@ export class AppController {
     return this.appService.getHello()
   }
 
+  @Get('health')
+  async healthCheck() {
+    try {
+      await this.prisma.$queryRaw`SELECT 1 as health`
+      return {
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        database: 'connected'
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        timestamp: new Date().toISOString(),
+        database: 'disconnected',
+        error: error.message
+      }
+    }
+  }
+
   @Get('db-test')
   async testDatabase() {
     try {
