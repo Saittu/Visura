@@ -43,6 +43,26 @@ export default defineConfig([
     }
   },
 
+  // Shared package
+  {
+    files: ['shared/**/*.{ts,tsx}'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module'
+      }
+    },
+    plugins: {
+      '@typescript-eslint': tseslint
+    },
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['warn'],
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/no-explicit-any': 'off'
+    }
+  },
+
   // Next.js
   {
     files: ['frontend/**/*.{js,jsx,ts,tsx}'],
