@@ -66,7 +66,6 @@ export class S3Service {
           Key: key,
           Body: file,
           ContentType: contentType,
-          ACL: isPublic ? 'public-read' : 'private',
           Metadata: metadata
         }
       })

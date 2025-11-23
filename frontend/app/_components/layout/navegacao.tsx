@@ -1,10 +1,15 @@
+'use client'
 import {
   Avatar,
   AvatarFallback,
   AvatarImage
 } from '@/app/_components/ui/avatar'
 import Button from '@/app/_components/ui/button'
+import * as Dialog from '@radix-ui/react-dialog'
+import { useState } from 'react'
+import PostComposerDialog from '../post/PostComposerDialog'
 import Link from 'next/link'
+import type { Post } from '@visura/shared'
 import {
   Home,
   Search,
@@ -36,7 +41,12 @@ const NavItem = ({
   </li>
 )
 
-export default function Navegacao() {
+interface NavegacaoProps {
+  onPostCreated?: (post: Post) => void
+}
+
+export default function Navegacao({ onPostCreated }: NavegacaoProps) {
+  const [open, setOpen] = useState(false)
   return (
     <aside className='fixed mt-6 mr-6 flex h-screen w-64 min-w-56 flex-col justify-between'>
       <div>
@@ -59,7 +69,7 @@ export default function Navegacao() {
 
         <nav aria-label='Main navigation' className='px-2'>
           <ul className='flex flex-col gap-1'>
-            <NavItem href='/home' Icon={Home} label='Página inicial' />
+            <NavItem href='/' Icon={Home} label='Página inicial' />
             <NavItem href='/explorar' Icon={Sparkles} label='Explorar' />
             <NavItem href='/notifications' Icon={Bell} label='Notificações' />
             <NavItem href='/messages' Icon={Mail} label='Mensagens' />
@@ -69,9 +79,17 @@ export default function Navegacao() {
         </nav>
 
         <div className='mt-4 px-2'>
-          <Button className='w-full' size='lg'>
-            Publicar
-          </Button>
+          <Dialog.Root open={open} onOpenChange={setOpen}>
+            <Dialog.Trigger asChild>
+              <Button className='w-full' size='lg'>
+                Publicar
+              </Button>
+            </Dialog.Trigger>
+            <PostComposerDialog
+              onClose={() => setOpen(false)}
+              onCreated={onPostCreated}
+            />
+          </Dialog.Root>
         </div>
       </div>
 

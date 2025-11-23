@@ -4,12 +4,14 @@ import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import type { Post } from '@visura/shared'
 import { Button } from '../ui/button'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
 
 import { Heart } from 'lucide-react'
 import { Repeat2 } from 'lucide-react'
 import { Bookmark } from 'lucide-react'
 import { MessageCircle } from 'lucide-react'
+import { X } from 'lucide-react'
 
 interface PostCardProps {
   post: Post
@@ -22,6 +24,7 @@ export function PostCard({ post, className, onLike, onSave }: PostCardProps) {
   const [likes, setLikes] = useState(post.likesCount || 0)
   const [liked, setLiked] = useState(!!post.likedByCurrentUser)
   const [saved, setSaved] = useState(!!post.savedByCurrentUser)
+  const [imageViewerOpen, setImageViewerOpen] = useState(false)
 
   const handleLike = async () => {
     setLiked((v) => !v)
@@ -68,7 +71,18 @@ export function PostCard({ post, className, onLike, onSave }: PostCardProps) {
           </div>
         </div>
         <div className='text-muted-foreground ml-auto text-xs'>
-          {new Date(post.createdAt).toLocaleString()}
+          {useMemo(() => {
+            try {
+              // Formatação determinística para evitar diferença servidor/cliente
+              return new Intl.DateTimeFormat('pt-BR', {
+                dateStyle: 'short',
+                timeStyle: 'short',
+                timeZone: 'UTC'
+              }).format(new Date(post.createdAt))
+            } catch {
+              return ''
+            }
+          }, [post.createdAt])}
         </div>
       </header>
 
@@ -79,14 +93,43 @@ export function PostCard({ post, className, onLike, onSave }: PostCardProps) {
       )}
 
       {post.imageUrl && (
-        <div className='relative mb-3 h-64 w-full overflow-hidden rounded-lg'>
-          <Image
-            src={post.imageUrl}
-            alt='post image'
-            fill
-            className='object-cover'
-          />
-        </div>
+        <Dialog.Root open={imageViewerOpen} onOpenChange={setImageViewerOpen}>
+          <Dialog.Trigger asChild>
+            <div className='relative mb-3 max-h-[500px] w-full cursor-pointer overflow-hidden rounded-lg transition-opacity hover:opacity-95'>
+              <Image
+                src={post.imageUrl}
+                alt='post image'
+                width={800}
+                height={600}
+                className='h-auto max-h-[500px] w-full rounded-lg object-cover'
+              />
+            </div>
+          </Dialog.Trigger>
+          <Dialog.Portal>
+            <Dialog.Overlay className='fixed inset-0 z-50 bg-black/90 backdrop-blur-sm' />
+            <Dialog.Content className='fixed inset-0 z-50 flex items-center justify-center p-4'>
+              <div className='relative h-full max-h-[90vh] w-full max-w-7xl'>
+                <Dialog.Close asChild>
+                  <button
+                    className='absolute top-4 right-4 z-10 rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70'
+                    aria-label='Fechar'
+                  >
+                    <X className='h-6 w-6' />
+                  </button>
+                </Dialog.Close>
+                <div className='relative h-full w-full'>
+                  <Image
+                    src={post.imageUrl}
+                    alt='post image full size'
+                    fill
+                    className='object-contain'
+                    quality={100}
+                  />
+                </div>
+              </div>
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog.Root>
       )}
 
       <footer className='mt-2 flex items-center gap-10'>

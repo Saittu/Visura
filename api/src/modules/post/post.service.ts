@@ -1,5 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { PrismaService } from '../../prisma/prisma.service'
+import { S3Service } from '../s3/s3.service'
 import { CreatePostInputDto } from './dto/create-post.dto'
 import { ListPostsQueryDto } from './dto/list-post.dto'
 import { Prisma } from '../../../generated/prisma'
@@ -25,36 +26,58 @@ export interface PostResponse {
 
 @Injectable()
 export class PostService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly s3: S3Service
+  ) {}
 
-  async create(userId: string, dto: CreatePostInputDto): Promise<PostResponse> {
+  async create(
+    userId: string,
+    dto: CreatePostInputDto,
+    files?: Express.Multer.File[]
+  ): Promise<PostResponse> {
     if (!userId) throw new UnauthorizedException('Usuário não autenticado')
+
+    // Upload de arquivos para S3 se fornecidos
+    let imageUrl: string | null = dto.imageUrl ?? null
+    if (files && files.length > 0) {
+      // Por enquanto usa só a primeira imagem; futuramente pode salvar múltiplas
+      const uploadResult = await this.s3.uploadFile(
+        files[0].buffer,
+        files[0].originalname,
+        { folder: 'posts', contentType: files[0].mimetype }
+      )
+      imageUrl = uploadResult.url
+    }
+
+    // Frontend envia 'text'; mapear para 'content'
+    const content = dto.text ?? dto.content ?? ''
 
     const created = await this.prisma.posts.create({
       data: {
         user_id: userId,
-        content: dto.content,
-        image_url: dto.imageUrl ?? null
-      },
-      include: {
-        users: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            avatar_url: true
-          }
-        }
+        content,
+        image_url: imageUrl
       }
     })
 
-    // Mapear para contrato compartilhado
-    const author = created.users
+    // Buscar autor separadamente
+    const user = await this.prisma.users.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        avatar_url: true
+      }
+    })
+
+    const author = user
       ? {
-          id: created.users.id,
-          username: created.users.username,
-          name: created.users.name,
-          avatarUrl: created.users.avatar_url ?? null
+          id: user.id,
+          username: user.username,
+          name: user.name,
+          avatarUrl: user.avatar_url ?? null
         }
       : undefined
 
@@ -86,7 +109,9 @@ export class PostService {
       })
     }
 
-    const post = await this.prisma.$queryRaw<any[]>`
+    try {
+      const userIdOrNull = currentUserId || null
+      const post = await this.prisma.$queryRaw<any[]>`
       SELECT
         p.id,
         p.user_id as "authorId",
@@ -100,14 +125,14 @@ export class PostService {
         u.avatar_url as "author_avatarUrl",
         COUNT(DISTINCT l.id) as "likesCount",
         COUNT(DISTINCT s.id) as "savedCount",
-        BOOL_OR(ul.id IS NOT NULL) as "likedByCurrentUser",
-        BOOL_OR(us.id IS NOT NULL) as "savedByCurrentUser"
+        CASE WHEN COUNT(ul.id) > 0 THEN true ELSE false END as "likedByCurrentUser",
+        CASE WHEN COUNT(us.id) > 0 THEN true ELSE false END as "savedByCurrentUser"
       FROM posts p
       INNER JOIN users u ON p.user_id = u.id
       LEFT JOIN likes l ON p.id = l.post_id
       LEFT JOIN saved_posts s ON p.id = s.post_id
-      LEFT JOIN likes ul ON p.id = ul.post_id AND ul.user_id = ${currentUserId}
-      LEFT JOIN saved_posts us ON p.id = us.post_id AND us.user_id = ${currentUserId}
+      LEFT JOIN likes ul ON p.id = ul.post_id AND ul.user_id = ${userIdOrNull}::uuid
+      LEFT JOIN saved_posts us ON p.id = us.post_id AND us.user_id = ${userIdOrNull}::uuid
       WHERE
         ${authorId ? Prisma.sql`p.user_id = ${authorId}` : Prisma.sql`1=1`}
         AND ${
@@ -119,31 +144,35 @@ export class PostService {
       ORDER BY p.created_at DESC, p.id DESC
       LIMIT ${limit + 1}
     `
-    const hasMore = post.length > limit
-    const items = post.slice(0, limit)
-    const nextCursor = hasMore ? items[items.length - 1].id : null
+      const hasMore = post.length > limit
+      const items = post.slice(0, limit)
+      const nextCursor = hasMore ? items[items.length - 1].id : null
 
-    return {
-      items: items.map((row) => ({
-        id: row.id,
-        authorId: row.authorId,
-        content: row.content,
-        imageUrl: row.imageUrl,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        likesCount: Number(row.likesCount),
-        savedCount: Number(row.savedCount),
-        likedByCurrentUser: row.likedByCurrentUser,
-        savedByCurrentUser: row.savedByCurrentUser,
-        author: {
-          id: row.author_id,
-          username: row.author_username,
-          name: row.author_name,
-          avatarUrl: row.author_avatarUrl
-        }
-      })),
-      nextCursor,
-      hasMore
+      return {
+        items: items.map((row) => ({
+          id: row.id,
+          authorId: row.authorId,
+          content: row.content,
+          imageUrl: row.imageUrl,
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+          likesCount: Number(row.likesCount),
+          savedCount: Number(row.savedCount),
+          likedByCurrentUser: row.likedByCurrentUser,
+          savedByCurrentUser: row.savedByCurrentUser,
+          author: {
+            id: row.author_id,
+            username: row.author_username,
+            name: row.author_name,
+            avatarUrl: row.author_avatarUrl
+          }
+        })),
+        nextCursor,
+        hasMore
+      }
+    } catch (error) {
+      console.error('Error listing posts:', error)
+      throw error
     }
   }
 }
