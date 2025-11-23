@@ -89,6 +89,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma Client
+        env:
+          DATABASE_URL: postgresql://visura_test:test_password@localhost:5432/visura_test?schema=public
         run: cd api && pnpm run prisma:generate
 
       - name: Run migrations
