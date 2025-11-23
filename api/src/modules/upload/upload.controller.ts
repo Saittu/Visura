@@ -11,6 +11,10 @@ import { FileInterceptor } from '@nestjs/platform-express'
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
 import { S3Service } from '../s3/s3.service'
 import { PrismaService } from '../../prisma/prisma.service'
+import type {
+  UploadAvatarResponse,
+  UploadPostMediaResponse
+} from '@visura/shared'
 
 @Controller('upload')
 @UseGuards(JwtAuthGuard)
@@ -25,7 +29,7 @@ export class UploadController {
   async uploadAvatar(
     @UploadedFile() file: Express.Multer.File,
     @Request() req
-  ) {
+  ): Promise<UploadAvatarResponse> {
     if (!file) {
       throw new BadRequestException('Arquivo não fornecido')
     }
@@ -82,7 +86,7 @@ export class UploadController {
   async uploadPostMedia(
     @UploadedFile() file: Express.Multer.File,
     @Request() req
-  ) {
+  ): Promise<UploadPostMediaResponse> {
     if (!file) {
       throw new BadRequestException('Arquivo não fornecido')
     }

@@ -8,19 +8,7 @@ import {
 } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 import { Readable } from 'stream'
-
-export interface UploadOptions {
-  folder?: string
-  contentType?: string
-  isPublic?: boolean
-  metadata?: Record<string, string>
-}
-
-export interface UploadResult {
-  key: string
-  url: string
-  bucket: string
-}
+import type { UploadOptions, UploadResult } from '@visura/shared'
 
 @Injectable()
 export class S3Service {
