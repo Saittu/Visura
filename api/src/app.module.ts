@@ -4,6 +4,8 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AuthModule } from './modules/auth/auth.module'
 import { PostModule } from './modules/post/post.module'
+import { S3Module } from './modules/s3/s3.module'
+import { UploadModule } from './modules/upload/upload.module'
 import { PrismaModule } from './prisma/prisma.module'
 
 @Module({
@@ -14,7 +16,9 @@ import { PrismaModule } from './prisma/prisma.module'
     }),
     PrismaModule,
     AuthModule,
-    PostModule
+    PostModule,
+    S3Module,
+    UploadModule
   ],
   controllers: [AppController],
   providers: [AppService]
