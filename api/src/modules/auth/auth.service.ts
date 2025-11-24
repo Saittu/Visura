@@ -294,4 +294,50 @@ export class AuthService {
 
     return user
   }
+
+  // DEV ONLY: Método para recuperar códigos de verificação (não usar em produção!)
+  async getDevVerificationCodes(email: string) {
+    const user = await this.prisma.users.findUnique({
+      where: { email }
+    })
+
+    if (!user) {
+      throw new BadRequestException('Usuário não encontrado')
+    }
+
+    // Busca último token de email não consumido
+    const emailToken = await this.prisma.email_tokens.findFirst({
+      where: {
+        user_id: user.id,
+        purpose: 'verify-email',
+        consumed: false
+      },
+      orderBy: { created_at: 'desc' }
+    })
+
+    // Busca último token de telefone não consumido
+    const phoneToken = await this.prisma.phone_tokens.findFirst({
+      where: {
+        user_id: user.id,
+        consumed: false
+      },
+      orderBy: { created_at: 'desc' }
+    })
+
+    return {
+      email: user.email,
+      emailVerified: user.email_verified,
+      phoneVerified: (user as any).phone_verified,
+      emailTokenExists: !!emailToken,
+      emailTokenExpired: emailToken
+        ? new Date(emailToken.expires_at) < new Date()
+        : null,
+      phoneTokenExists: !!phoneToken,
+      phoneTokenExpired: phoneToken
+        ? new Date(phoneToken.expire_at) < new Date()
+        : null,
+      message:
+        'Em DEV, os códigos aparecem nos logs do container. Use: docker logs visura-api | grep "DEV EMAIL\\|DEV SMS"'
+    }
+  }
 }

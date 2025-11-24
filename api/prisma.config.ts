@@ -1,6 +1,6 @@
-import 'dotenv/config'
-import { defineConfig, env } from 'prisma/config'
+import { defineConfig } from 'prisma/config'
 
+// Usar process.env diretamente para garantir leitura em produção
 export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
@@ -8,6 +8,6 @@ export default defineConfig({
   },
   engine: 'classic',
   datasource: {
-    url: env('DATABASE_URL')
+    url: process.env.DATABASE_URL || 'postgresql://localhost:5432/postgres'
   }
 })

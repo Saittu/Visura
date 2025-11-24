@@ -1,4 +1,12 @@
-import { Body, Controller, Post, UseGuards, Request } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Post,
+  UseGuards,
+  Request,
+  Get,
+  Param
+} from '@nestjs/common'
 import { AuthService } from './auth.service'
 import { LoginDto } from './dto/login.dto'
 import { RegisterDto } from './dto/register.dto'
@@ -44,5 +52,14 @@ export class AuthController {
   @Post('verify-phone')
   async verifyPhone(@Body() body: { userId: string; code: string }) {
     return this.authService.verifyPhone(body.userId, { code: body.code })
+  }
+
+  // DEV ONLY: Endpoint para pegar códigos de verificação (não usar em produção!)
+  @Get('dev/codes/:email')
+  async getVerificationCodes(@Param('email') email: string) {
+    if (process.env.NODE_ENV === 'production') {
+      return { error: 'Endpoint disponível apenas em desenvolvimento' }
+    }
+    return this.authService.getDevVerificationCodes(email)
   }
 }
