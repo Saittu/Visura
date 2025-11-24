@@ -8,8 +8,12 @@ import type {
   User
 } from '@visura/shared'
 
-// API Routes internas do Next.js (BFF - Backend For Frontend)
-const API_URL = '/api/auth'
+// Base do backend Rails/Prisma hospedado (Railway). Em produção, definir NEXT_PUBLIC_BACKEND_URL na Vercel.
+// Fallback para desenvolvimento local.
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3332'
+// Endpoint base das rotas de auth no backend NestJS
+const API_URL = `${BACKEND_URL}/auth`
 
 // Re-exportar tipos do shared para compatibilidade com código existente
 export type RegisterPayload = RegisterDto

@@ -143,6 +143,156 @@ npx prisma studio  # Interface visual do banco
 pnpm lint
 ```
 
+## Desenvolvimento: Verificação de Email/SMS
+
+Em **desenvolvimento** (quando credenciais não estão configuradas), os códigos de verificação **não são enviados**, mas aparecem nos **logs do container**:
+
+```powershell
+# Ver códigos de verificação nos logs
+docker logs visura-api | Select-String -Pattern "DEV EMAIL|DEV SMS"
+
+# OU ver logs em tempo real
+docker logs visura-api -f
+
+# OU usar endpoint helper (DEV only)
+curl http://localhost:3333/auth/dev/codes/seuemail@example.com
+```
+
+**Exemplo de saída:**
+```
+[MailService] DEV EMAIL -> To: user@example.com
+Código: 551888
+
+[SmsService] DEV SMS -> To: +5543991155104
+Código: 884386
+```
+
+Use esses códigos nos endpoints `/auth/verify-email` e `/auth/verify-phone`.
+
+## Configuração de Email e SMS (Produção)
+
+### Opção 1: AWS SES (Recomendado para email)
+
+O sistema prioriza AWS SES se as credenciais AWS estiverem disponíveis:
+
+```env
+# AWS (usado para S3 e SES)
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=sua-access-key
+AWS_SECRET_ACCESS_KEY=sua-secret-key
+
+# Email sender (deve ser verificado no AWS SES)
+AWS_SES_FROM=noreply@seudominio.com
+```
+
+**Passos AWS SES:**
+1. Acesse [AWS SES Console](https://console.aws.amazon.com/ses/)
+2. Verifique seu domínio ou email de envio
+3. Configure DKIM e SPF records no seu DNS
+4. Solicite saída do sandbox (produção) para enviar para qualquer email
+5. Use as mesmas credenciais AWS do S3
+
+### Opção 2: SMTP Genérico (Gmail, SendGrid, etc.)
+
+Fallback se AWS não estiver configurado:
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=seu-email@gmail.com
+SMTP_PASS=sua-senha-de-app
+SMTP_FROM=noreply@visura.com
+```
+
+**Gmail:** 
+- Use [App Password](https://support.google.com/accounts/answer/185833)
+- Ative autenticação de 2 fatores primeiro
+- Gere uma senha de app específica
+
+**SendGrid/Mailgun:**
+- Use as credenciais SMTP fornecidas
+- Porta 587 (TLS) ou 465 (SSL)
+
+### Twilio SMS
+
+Configurar Twilio para envio de SMS:
+
+```env
+TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN=seu-auth-token
+TWILIO_PHONE_NUMBER=+15551234567
+```
+
+**Passos Twilio:**
+1. Crie conta em [twilio.com](https://www.twilio.com)
+2. Compre um número de telefone (+55 para Brasil)
+3. Copie Account SID e Auth Token do dashboard
+4. Configure webhook URL se precisar receber respostas
+
+**Sandbox Mode (Desenvolvimento):**
+- Twilio Free Trial permite enviar SMS apenas para números verificados
+- Adicione números de teste no console
+- Upgrade para enviar para qualquer número
+
+### Arquivo .env completo (Produção)
+
+Crie `.env` na raiz do monorepo:
+
+```env
+# Database
+DATABASE_URL=postgresql://user:password@host:5432/visura?schema=public
+
+# Redis
+REDIS_URL=redis://host:6379
+
+# JWT
+JWT_SECRET=sua-chave-secreta-complexa-aqui
+JWT_REFRESH_SECRET=outra-chave-secreta-para-refresh
+
+# AWS (S3 + SES)
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=sua-access-key
+AWS_SECRET_ACCESS_KEY=sua-secret-key
+AWS_S3_BUCKET=visura-uploads
+AWS_S3_PUBLIC_URL=https://visura-uploads.s3.us-east-1.amazonaws.com
+AWS_SES_FROM=noreply@seudominio.com
+
+# Twilio
+TWILIO_ACCOUNT_SID=ACxxxxxxxxxx
+TWILIO_AUTH_TOKEN=seu-token
+TWILIO_PHONE_NUMBER=+5511999999999
+
+# SMTP (opcional, se não usar SES)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=email@gmail.com
+SMTP_PASS=senha-de-app
+SMTP_FROM=noreply@visura.com
+```
+
+### Testar configuração
+
+```powershell
+# Registrar novo usuário (vai tentar enviar email/SMS real)
+curl -X POST http://localhost:3333/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "teste@example.com",
+    "username": "teste",
+    "name": "Teste",
+    "password": "senha123",
+    "telephone": "+5511999999999"
+  }'
+
+# Verificar logs para confirmar envio
+docker logs visura-api -f
+```
+
+Você verá:
+- **Sucesso AWS SES:** `[MailService] Email enviado para teste@example.com`
+- **Sucesso Twilio:** `[SmsService] SMS enviado para +5511999999999 (SID: SMxxx)`
+- **Erro:** Mensagem de erro detalhada nos logs
+
 ## TODO - Próximos Passos
 
 ### Funcionalidades Core

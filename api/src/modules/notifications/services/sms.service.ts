@@ -11,11 +11,19 @@ export class SmsService {
     const sid = this.config.get<string>('TWILIO_ACCOUNT_SID')
     const token = this.config.get<string>('TWILIO_AUTH_TOKEN')
 
-    if (sid && token) {
-      this.client = Twilio(sid, token)
+    // Validar formato do SID (deve começar com AC)
+    if (sid && token && sid.startsWith('AC')) {
+      try {
+        this.client = Twilio(sid, token)
+        this.logger.log('Twilio configurado')
+      } catch (err: any) {
+        this.logger.error(
+          `Falha ao inicializar Twilio: ${err.message}. SMS serão logados.`
+        )
+      }
     } else {
       this.logger.warn(
-        'Twilio não configurado (.env). SMS serão logados no console em modo DEV.'
+        'Twilio não configurado ou credenciais inválidas (.env). SMS serão logados no console em modo DEV.'
       )
     }
   }
@@ -26,11 +34,17 @@ export class SmsService {
       return
     }
 
-    const from = this.config.get<string>('TWILIO_FROM')
+    const from = this.config.get<string>('TWILIO_PHONE_NUMBER')
     if (!from) {
-      throw new Error('TWILIO_FROM não configurado no .env')
+      throw new Error('TWILIO_PHONE_NUMBER não configurado no .env')
     }
 
-    await this.client.messages.create({ to, from, body })
+    try {
+      const message = await this.client.messages.create({ to, from, body })
+      this.logger.log(`SMS enviado para ${to} (SID: ${message.sid})`)
+    } catch (error) {
+      this.logger.error(`Falha ao enviar SMS para ${to}: ${error.message}`)
+      throw error
+    }
   }
 }
