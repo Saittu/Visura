@@ -6,7 +6,6 @@ const BACKEND_URL = process.env.BACKEND_API_URL || 'http://localhost:3333'
 
 export async function POST(request: Request) {
   try {
-    const body: CreatePostDto = await request.json()
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('accessToken')?.value
 
@@ -14,13 +13,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Não autenticado' }, { status: 401 })
     }
 
+    // Recebe FormData do cliente (text + arquivos 'media')
+    const formData = await request.formData()
+
+    // Repassa FormData diretamente ao backend Nest com autenticação
     const res = await fetch(`${BACKEND_URL}/posts`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         Authorization: `Bearer ${accessToken}`
+        // Não definir Content-Type; fetch define automaticamente para multipart/form-data
       },
-      body: JSON.stringify(body)
+      body: formData
     })
 
     const data = await res.json()
